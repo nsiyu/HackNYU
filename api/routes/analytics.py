@@ -3,8 +3,6 @@ from fastapi.responses import JSONResponse
 import openai
 import json
 from pydantic import BaseModel
-
-from ..database import supabase, get_user_transactions, get_user_info
 from ..config import settings, logger
 
 

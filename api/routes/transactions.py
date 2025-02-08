@@ -89,9 +89,9 @@ async def transfer_funds(request: Request):
             )
 
         create_c1_transfer_account(
-            data.from_account,
+            from_account._id,
             medium="balance",
-            payee_id=data.to_account,
+            payee_id=to_account._id,
             amount=data.amount,
             status="completed",
             description="Direct Transfer",

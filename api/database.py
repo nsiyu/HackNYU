@@ -3,7 +3,7 @@ from typing import List, Optional
 import requests
 import json
 from .config import settings
-from .models import AccountInfo, LoanInfo, TransactionInfo
+from .models import AccountInfo, LoanInfo, TransactionInfo, CustomerInfo, AddressInfo
 
 supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
 
@@ -207,3 +207,28 @@ def create_c1_transfer_account(
     except Exception as e:
         print(f"Unexpected error: {e}")
         return {"error": {"message": "An unexpected error occurred"}}
+
+
+def get_c1_customer(user_id: str) -> Optional[CustomerInfo]:
+    url = f"{BASE_C1_URL}/customers/{user_id}?key={settings.C1_KEY}"
+    try:
+        response = requests.get(url, headers={"Content-Type": "application/json"})
+        response.raise_for_status()
+
+        customer_data = response.json()
+        return CustomerInfo(
+            _id=customer_data["_id"],
+            first_name=customer_data["first_name"],
+            last_name=customer_data["last_name"],
+            address=AddressInfo(
+                street_number=customer_data["address"]["street_number"],
+                street_name=customer_data["address"]["street_name"],
+                city=customer_data["address"]["city"],
+                state=customer_data["address"]["state"],
+                zip=customer_data["address"]["zip"],
+            ),
+        )
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching Customer: {e}")
+        return None

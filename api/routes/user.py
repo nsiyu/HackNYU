@@ -19,7 +19,7 @@ class UserAuthRequest(BaseModel):
     pin: int
 
 
-@router.post("/balance")
+@router.post("/auth")
 async def get_balance(request: Request):
     try:
         body = await request.json()
@@ -41,6 +41,7 @@ async def get_balance(request: Request):
             .single()
             .execute()
         )
+
         stored_pin = response.data.get("pin") if response.data else None
 
         if stored_pin is None or stored_pin != data.pin:
