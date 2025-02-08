@@ -3,7 +3,14 @@ from typing import List, Optional
 import requests
 import json
 from .config import settings
-from .models import AccountInfo, LoanInfo, TransactionInfo, CustomerInfo, AddressInfo
+from .models import (
+    AccountInfo,
+    LoanInfo,
+    TransactionInfo,
+    CustomerInfo,
+    AddressInfo,
+    CustomerAdditionalInfo,
+)
 
 supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
 
@@ -232,3 +239,27 @@ def get_c1_customer(user_id: str) -> Optional[CustomerInfo]:
     except requests.exceptions.RequestException as e:
         print(f"Error fetching Customer: {e}")
         return None
+
+
+def get_sb_customer_info(customer_id: str) -> Optional[CustomerAdditionalInfo]:
+    response = (
+        supabase.table("customer_additional")
+        .select("*")
+        .eq("customer_id", customer_id)
+        .single()
+        .execute()
+    )
+
+    if response.data:
+        return CustomerAdditionalInfo(
+            **response.data
+        )  # Convert response to Pydantic model
+    else:
+        return None  # Handle case where customer_id is not found
+
+
+# Example usage:
+# from supabase import create_client
+# supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+# customer_info = get_sb_customer_info(supabase, "12345")
+# print(customer_info)

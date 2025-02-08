@@ -4,6 +4,7 @@ import openai
 import json
 from pydantic import BaseModel
 from ..config import settings, logger
+from ..database import get_c1_customer, get_c1_user_transactions, get_sb_customer_info
 
 
 router = APIRouter()
@@ -29,8 +30,9 @@ async def get_spending_habits(request: Request):
     user_data = UserSpendingHabitsRequest(user_id=args.get("user_id"))
     logger.debug(f"user id: {user_data.user_id}")
 
-    user_info = get_user_info(user_data.user_id)
-    if user_info is None:
+    customer_info = get_c1_customer(user_id=user_data.user_id)
+    additional_customer_info = get_sb_customer_info(user_data.user_id)
+    if customer_info is None or additional_customer_info is None:
         return JSONResponse(
             status_code=403,
             content={
@@ -40,7 +42,8 @@ async def get_spending_habits(request: Request):
                 }
             },
         )
-    transactions = get_user_transactions(user_data.user_id)
+
+    transactions = get_c1_user_transactions(user_data.user_id)
 
     if transactions is None:
         return JSONResponse(
@@ -55,9 +58,9 @@ async def get_spending_habits(request: Request):
 
     transaction_str = ""
     for idx, transaction in enumerate(transactions):
-        transaction_str += f"transaction {idx}: amount: {transaction.amount}, category: {transaction.category}\n"
+        transaction_str += f"transaction {idx}: amount: {transaction.amount}, description: {transaction.description}\n"
 
-    user_info_str = f"USER - dependents: {user_info.dependents}, credit_score: {user_info.credit_score}, income: {user_info.income}, age: {user_info.age}"
+    user_info_str = f"USER - dependents: {additional_customer_info.number_of_dependents}, credit_score: {additional_customer_info.credit_score}, income: {additional_customer_info.income}, age: {additional_customer_info.age}"
     report_prompt = f"Analyze the following transactions and user info and summerize spending habits in 2 sentences:\n USER {user_info_str} \n TRANSACTIONS {transaction_str}"
 
     response = open_ai_client.chat.completions.create(
@@ -81,8 +84,9 @@ async def get_spending_plan(request: Request):
     user_data = UserSpendingHabitsRequest(user_id=args.get("user_id"))
     logger.debug(f"user id: {user_data.user_id}")
 
-    user_info = get_user_info(user_data.user_id)
-    if user_info is None:
+    customer_info = get_c1_customer(user_id=user_data.user_id)
+    additional_customer_info = get_sb_customer_info(user_data.user_id)
+    if customer_info is None or additional_customer_info is None:
         return JSONResponse(
             status_code=403,
             content={
@@ -93,7 +97,7 @@ async def get_spending_plan(request: Request):
             },
         )
 
-    user_info_str = f"USER - dependents: {user_info.dependents}, credit_score: {user_info.credit_score}, income: {user_info.income}, age: {user_info.age}"
+    user_info_str = f"USER - dependents: {additional_customer_info.number_of_dependents}, credit_score: {additional_customer_info.credit_score}, income: {additional_customer_info.income}, age: {additional_customer_info.age}"
     plan_prompt = f"""Based on the user info and standard good spending habits, generate a 
     spending amount for each category per month and a summary. Your response must be a JSON 
     object with keys: spending_plan_summary, housing_amount, food_amount, shopping_amount, entertainment_amount, saving_amount.\n

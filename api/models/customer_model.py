@@ -14,3 +14,11 @@ class CustomerInfo(BaseModel):
     first_name: str
     last_name: str
     address: AddressInfo
+
+
+class CustomerAdditionalInfo(BaseModel):
+    customer_id: str
+    income: int
+    number_of_dependents: int
+    credit_score: int
+    age: int

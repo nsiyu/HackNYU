@@ -12,4 +12,4 @@ class TransactionInfo(BaseModel):
     amount: int
     status: str
     medium: str
-    description: str
+    description: Optional[str]
