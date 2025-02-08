@@ -15,7 +15,47 @@ router = APIRouter()
 
 
 class UserAuthRequest(BaseModel):
-    user_id: int
+    account_id: str
+    pin: int
+
+
+@router.post("/balance")
+async def get_balance(request: Request):
+    try:
+        body = await request.json()
+        logger.info(f"Received request body: {body}")
+
+        # Extract args from the nested call structure
+        args = body.get("args", {})
+        logger.info(f"Extracted args: {args}")
+
+        # Get user_id from args
+        account_id = args.get("account_id")
+        pin = args.get("pin")
+        data = UserAuthRequest(account_id=account_id, pin=pin)
+
+        response = (
+            supabase.table("account_pins")
+            .select("pin")
+            .eq("account_id", data.account_id)
+            .single()
+            .execute()
+        )
+        stored_pin = response.data.get("pin") if response.data else None
+
+        if stored_pin is None or stored_pin != data.pin:
+            raise HTTPException(status_code=401, detail="Invalid PIN")
+
+        return JSONResponse(
+            status_code=200,
+            content={"result": {"message": "Authenticated"}},
+        )
+
+    except HTTPException as e:
+        return JSONResponse(status_code=e.status_code, content={"error": e.detail})
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return JSONResponse(status_code=500, content={"error": "Internal server error"})
 
 
 @router.get("/account/{account_id}", response_model=AccountInfo)
