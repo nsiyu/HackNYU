@@ -4,8 +4,11 @@ from typing import Optional
 
 
 class LoanInfo(BaseModel):
-    id: int
-    user_id: int
-    account_number: int
-    amount: float
-    requested_at: Optional[datetime]
+    _id: int
+    type: str
+    creation_date: str
+    status: str
+    credit_score: int
+    monthly_payment: float
+    amount: int
+    description: Optional[str]

@@ -4,9 +4,12 @@ from typing import Optional
 
 
 class TransactionInfo(BaseModel):
-    id: int
-    user_id: int
-    account_number: int
-    amount: float
-    category: str
-    created_at: Optional[datetime]
+    _id: str
+    type: str
+    merchant_id: str
+    payer_id: str
+    purchase_date: str
+    amount: int
+    status: str
+    medium: str
+    description: str

@@ -1,24 +1,22 @@
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-from ..database import supabase
-import logging
+from ..database import supabase, get_c1_account_info, create_c1_transfer_account
+from ..config import logger
 
 router = APIRouter()
 
 
 class BalanceRequest(BaseModel):
-    user_id: str = Field(..., description="String of digits representing the user ID")
+    account_id: str = Field(
+        ..., description="String of digits representing the account_id"
+    )
 
 
 class TransferRequest(BaseModel):
-    from_user: str = Field(..., description="User ID of sender")
-    to_user: str = Field(..., description="User ID of recipient")
+    from_account: str = Field(..., description="Account ID of sender")
+    to_account: str = Field(..., description="Account ID of recipient")
     amount: float = Field(..., description="Amount to transfer")
-
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 @router.post("/balance")
@@ -32,25 +30,16 @@ async def get_balance(request: Request):
         logger.info(f"Extracted args: {args}")
 
         # Get user_id from args
-        user_id = args.get("user_id")
+        account_id = args.get("account_id")
 
-        data = BalanceRequest(user_id=user_id)
-
-        query = (
-            supabase.table("accounts")
-            .select("balance")
-            .eq("user_id", int(data.user_id))
-            .single()
-        )
-
-        logger.info(f"Executing query: {query}")
-
-        result = query.execute()
-        logger.info(f"Query result: {result}")
+        data = BalanceRequest(account_id=account_id)
+        result = get_c1_account_info(data.account_id)
 
         return JSONResponse(
             status_code=200,
-            content={"result": {"message": "Balance retrieved", "data": result.data}},
+            content={
+                "result": {"message": "Balance retrieved", "balance": result.balance}
+            },
         )
 
     except ValueError as e:
@@ -69,34 +58,15 @@ async def transfer_funds(request: Request):
         logger.info(f"Extracted args: {args}")
 
         data = TransferRequest(
-            from_user=args.get("from_user"),
-            to_user=args.get("to_user"),
+            from_account=args.get("from_account"),
+            to_account=args.get("to_account"),
             amount=float(args.get("amount")),
         )
 
-        # Get sender's balance
-        from_user_query = (
-            supabase.table("accounts")
-            .select("balance")
-            .eq("user_id", int(data.from_user))
-            .single()
-        )
+        from_account = get_c1_account_info(data.from_account)
+        to_account = get_c1_account_info(data.to_account)
 
-        logger.info(f"Querying sender balance: {from_user_query}")
-        from_user_data = from_user_query.execute()
-
-        # Get recipient's balance
-        to_user_query = (
-            supabase.table("accounts")
-            .select("balance")
-            .eq("user_id", int(data.to_user))
-            .single()
-        )
-
-        logger.info(f"Querying recipient balance: {to_user_query}")
-        to_user_data = to_user_query.execute()
-
-        if not from_user_data.data or not to_user_data.data:
+        if not from_account or not to_account:
             return JSONResponse(
                 status_code=404,
                 content={
@@ -107,7 +77,7 @@ async def transfer_funds(request: Request):
                 },
             )
 
-        if from_user_data.data["balance"] < data.amount:
+        if from_account.balance < data.amount:
             return JSONResponse(
                 status_code=400,
                 content={
@@ -118,14 +88,14 @@ async def transfer_funds(request: Request):
                 },
             )
 
-        # Perform transfer
-        supabase.table("accounts").update(
-            {"balance": from_user_data.data["balance"] - data.amount}
-        ).eq("user_id", int(data.from_user)).execute()
-
-        supabase.table("accounts").update(
-            {"balance": to_user_data.data["balance"] + data.amount}
-        ).eq("user_id", int(data.to_user)).execute()
+        create_c1_transfer_account(
+            data.from_account,
+            medium="balance",
+            payee_id=data.to_account,
+            amount=data.amount,
+            status="completed",
+            description="Direct Transfer",
+        )
 
         return JSONResponse(
             status_code=200,
@@ -133,8 +103,8 @@ async def transfer_funds(request: Request):
                 "result": {
                     "message": "Transfer successful",
                     "data": {
-                        "from_user": data.from_user,
-                        "to_user": data.to_user,
+                        "from_user": data.from_account,
+                        "to_user": data.to_account,
                         "amount": data.amount,
                     },
                 }
