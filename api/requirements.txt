@@ -1,0 +1,7 @@
+fastapi==0.115.8
+numpy==2.2.2
+openai==1.61.1
+pydantic==2.10.6
+pydantic_settings==2.7.1
+supabase==2.13.0
+uvicorn==0.27.1
