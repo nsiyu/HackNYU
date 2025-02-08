@@ -1,18 +1,23 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { GoogleIcon, TelegramIcon, AppleIcon } from '../components/icons/SocialIcons'
-import { PasswordStep } from '../components/login/PasswordStep'
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  GoogleIcon,
+  TelegramIcon,
+  AppleIcon,
+} from "../components/icons/SocialIcons";
+import { PasswordStep } from "../components/login/PasswordStep";
 
 function Login() {
-  const [email, setEmail] = useState('')
-  const [step, setStep] = useState<'email' | 'password'>('email')
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [step, setStep] = useState<"email" | "password">("email");
 
   const handleEmailSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (email.trim()) {
-      setStep('password')
+      setStep("password");
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-[#0B0E11] text-white flex items-center justify-center px-4">
@@ -37,7 +42,9 @@ function Login() {
       <div className="w-full max-w-md p-8 rounded-2xl bg-secondary/50 backdrop-blur-sm border border-secondary-light relative">
         <Link to="/" className="block text-center mb-8">
           <div className="flex items-center justify-center gap-2">
-            <span className="font-display text-2xl font-bold text-primary">Zeri</span>
+            <span className="font-display text-2xl font-bold text-primary">
+              Zeri
+            </span>
           </div>
         </Link>
 
@@ -45,7 +52,7 @@ function Login() {
         <p className="text-gray-400 mb-8">Log in to access your account</p>
 
         <div className="space-y-6">
-          {step === 'email' ? (
+          {step === "email" ? (
             <form onSubmit={handleEmailSubmit}>
               <div className="relative">
                 <input
@@ -60,7 +67,7 @@ function Login() {
                 </label>
               </div>
 
-              <button 
+              <button
                 type="submit"
                 className="w-full py-3 mt-6 bg-primary hover:bg-primary-dark rounded-lg transition-colors font-medium"
               >
@@ -72,43 +79,57 @@ function Login() {
                   <div className="w-full border-t border-secondary-light"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-secondary/50 backdrop-blur-sm text-gray-400">or continue with</span>
+                  <span className="px-4 bg-secondary/50 backdrop-blur-sm text-gray-400">
+                    or continue with
+                  </span>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
-                <button type="button" className="p-3 rounded-lg border border-secondary-light hover:bg-secondary-light/50 transition-all flex items-center justify-center group">
+                <button
+                  type="button"
+                  className="p-3 rounded-lg border border-secondary-light hover:bg-secondary-light/50 transition-all flex items-center justify-center group"
+                >
                   <GoogleIcon />
                 </button>
-                <button type="button" className="p-3 rounded-lg border border-secondary-light hover:bg-secondary-light/50 transition-all flex items-center justify-center group">
+                <button
+                  type="button"
+                  className="p-3 rounded-lg border border-secondary-light hover:bg-secondary-light/50 transition-all flex items-center justify-center group"
+                >
                   <AppleIcon />
                 </button>
-                <button type="button" className="p-3 rounded-lg border border-secondary-light hover:bg-secondary-light/50 transition-all flex items-center justify-center group">
+                <button
+                  type="button"
+                  className="p-3 rounded-lg border border-secondary-light hover:bg-secondary-light/50 transition-all flex items-center justify-center group"
+                >
                   <TelegramIcon />
                 </button>
               </div>
             </form>
           ) : (
-            <PasswordStep 
+            <PasswordStep
               email={email}
-              onBack={() => setStep('email')}
+              onBack={() => setStep("email")}
               onSubmit={(password) => {
-                console.log('Logging in with:', email, password)
-                window.location.href = '/dashboard'
+                console.log("Logging in with:", email, password);
+                navigate("/dashboard");
               }}
             />
           )}
 
           <div className="text-center mt-8">
             <span className="text-gray-400">Don't have an account? </span>
-            <Link to="/register" className="text-primary hover:text-primary-light transition-colors">
+            <Link
+              to="/register"
+              className="text-primary hover:text-primary-light transition-colors"
+            >
               Sign up
             </Link>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default Login 
+export default Login;
