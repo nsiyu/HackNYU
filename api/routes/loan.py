@@ -8,10 +8,11 @@ import os
 from ..config import logger
 from ..database import (
     supabase,
-    get_user_accounts,
-    get_user_info,
-    get_user_loans,
-    get_user_transactions,
+    get_c1_user_loans,
+    get_sb_customer_info,
+    get_c1_user_transactions,
+    get_c1_accounts,
+    get_c1_customer,
 )
 
 router = APIRouter()
@@ -40,7 +41,6 @@ class LoanApplicationModel(BaseModel):
     total_balance: float
     income: float
     age: int
-    gender: str
     credit_score: int
     dependents: int
 
@@ -74,6 +74,7 @@ async def submit_loan_application(request: Request):
     logger.debug(
         f"user id: {loan_data.user_id} -- account number {loan_data.account_number}"
     )
+
     user_id = loan_data.user_id
     account_number = loan_data.account_number
 
@@ -151,18 +152,20 @@ def calculate_user_loan_info(user_id: int) -> Optional[LoanApplicationModel]:
     """Calculate loan-related metrics for a user"""
 
     # 1. Get all user loans and sum total debt
-    user_loans = get_user_loans(user_id)
+    user_loans = get_c1_user_loans(user_id)
     total_debt = sum(loan.amount for loan in user_loans) if user_loans else 0.0
 
     # 2. Get all transactions and compute average monthly spending
-    user_transactions = get_user_transactions(user_id)
+    user_transactions = get_c1_user_transactions(user_id)
     if user_transactions:
         now = datetime.now()
         one_year_ago = now - timedelta(days=365)
 
         # Filter transactions from the last 12 months
         last_year_transactions = [
-            txn for txn in user_transactions if txn.created_at >= one_year_ago
+            txn
+            for txn in user_transactions
+            if datetime.strptime(txn.purchase_date, "%Y-%m-%d").date() >= one_year_ago
         ]
 
         if last_year_transactions:
@@ -176,14 +179,15 @@ def calculate_user_loan_info(user_id: int) -> Optional[LoanApplicationModel]:
         avg_monthly_spending = 0.0
 
     # 3. Get all accounts and calculate total balance
-    user_accounts = get_user_accounts(user_id)
+    user_accounts = get_c1_accounts(user_id)
     total_balance = (
         sum(account.balance for account in user_accounts) if user_accounts else 0.0
     )
 
     # 4. Get user personal details
-    user_info = get_user_info(user_id)
-    if not user_info:
+    user_info = get_c1_customer(user_id)
+    additional_user_info = get_sb_customer_info(user_id)
+    if not user_info or not additional_user_info:
         return None  # User not found
 
     # 5. Create LoanModel object
@@ -192,9 +196,8 @@ def calculate_user_loan_info(user_id: int) -> Optional[LoanApplicationModel]:
         total_debt=total_debt,
         avg_monthly_spending=avg_monthly_spending,
         total_balance=total_balance,
-        income=user_info.income,
-        age=user_info.age,
-        gender=user_info.gender,
-        credit_score=user_info.credit_score,
-        dependents=user_info.dependents,
+        income=additional_user_info.income,
+        age=additional_user_info.age,
+        credit_score=additional_user_info.credit_score,
+        dependents=additional_user_info.number_of_dependents,
     )

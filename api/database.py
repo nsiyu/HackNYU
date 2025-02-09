@@ -163,6 +163,18 @@ def get_c1_account_loans(account_id: str) -> Optional[List[LoanInfo]]:
         return None
 
 
+def get_c1_user_loans(user_id: str) -> Optional[List[LoanInfo]]:
+    accounts = get_c1_accounts(user_id=user_id)
+    if accounts is None:
+        return None
+    loans = []
+    for account in accounts:
+        curr_account_loans = get_c1_account_loans(account_id=account._id)
+        if curr_account_loans is not None:
+            loans.extend(curr_account_loans)
+    return loans
+
+
 def create_c1_transfer_account(
     account_id: str,
     medium: str,
@@ -256,10 +268,3 @@ def get_sb_customer_info(customer_id: str) -> Optional[CustomerAdditionalInfo]:
         )  # Convert response to Pydantic model
     else:
         return None  # Handle case where customer_id is not found
-
-
-# Example usage:
-# from supabase import create_client
-# supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-# customer_info = get_sb_customer_info(supabase, "12345")
-# print(customer_info)
