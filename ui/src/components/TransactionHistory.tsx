@@ -85,7 +85,6 @@ export function TransactionHistory() {
         throw fetchError;
       }
 
-      console.log("Fetched transactions:", data);
       setTransactions(data || []);
       setError(null);
     } catch (err) {

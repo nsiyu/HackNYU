@@ -53,8 +53,7 @@ interface Transaction {
 
 // Add conversion rates (you might want to fetch these from an API in production)
 const CONVERSION_RATES = {
-  KES_TO_USD: 0.007, // 1 KES = 0.0070 USD
-  ETH_TO_USD: 2345.67, // 1 ETH = 2345.67 USD (you should fetch real-time rates)
+  USDC_TO_USD: 1, // 1 ETH = 2345.67 USD (you should fetch real-time rates)
 };
 
 export function Home() {
@@ -76,7 +75,6 @@ export function Home() {
           throw new Error("No authenticated user");
         }
 
-        console.log("Current user:", user.id);
 
         // Fetch user's accounts and transactions in parallel
         const [accountsResponse, transactionsResponse] = await Promise.all([
@@ -93,12 +91,7 @@ export function Home() {
         const { data: transactions, error: transactionsError } =
           transactionsResponse;
 
-        console.log("Fetched accounts:", accounts);
-        console.log("Accounts error:", accountsError);
-        console.log("Fetched transactions:", transactions);
-        console.log("Transactions error:", transactionsError);
-
-        if (accountsError) throw accountsError;
+          if (accountsError) throw accountsError;
         if (transactionsError) throw transactionsError;
 
       
@@ -109,10 +102,9 @@ export function Home() {
         // Calculate total balance in USD
         const totalUSD = accounts.reduce((total: number, account: Account) => {
           const fiatUSD = account.fiat; // Assuming fiat is already in USD
-          const mobileMoneyUSD =
-            account.mobile_money * CONVERSION_RATES.KES_TO_USD;
-          const cryptoUSD = account.crypto * CONVERSION_RATES.ETH_TO_USD;
-          return total + fiatUSD + mobileMoneyUSD + cryptoUSD;
+     
+          const cryptoUSD = account.crypto * CONVERSION_RATES.USDC_TO_USD;
+          return total + fiatUSD + cryptoUSD;
         }, 0);
 
         setTotalBalanceUSD(totalUSD);
@@ -131,19 +123,11 @@ export function Home() {
               valueUSD: account.fiat, // Already in USD
             },
             {
-              type: "Mobile Money",
-              balance: account.mobile_money.toLocaleString("en-US"),
-              currency: "KES",
-              provider: "M-Pesa",
-              icon: <PhoneIcon className="w-6 h-6" />,
-              valueUSD: account.mobile_money * CONVERSION_RATES.KES_TO_USD,
-            },
-            {
               type: "Crypto",
               balance: account.crypto.toFixed(4),
-              currency: "ETH",
+              currency: "USDC",
               value: (
-                account.crypto * CONVERSION_RATES.ETH_TO_USD
+                account.crypto * CONVERSION_RATES.USDC_TO_USD
               ).toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
@@ -156,37 +140,22 @@ export function Home() {
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
+                  <circle cx="12" cy="12" r="10" fill="currentColor" fillOpacity="0.2"/>
                   <path
-                    d="M12 2L11.8887 2.37841V15.8561L12 15.9674L18.5774 12.0855L12 2Z"
+                    d="M12.9937 15.9861C12.9937 16.5361 12.5437 16.9861 11.9937 16.9861C11.4437 16.9861 10.9937 16.5361 10.9937 15.9861V14.4861H9.99371V15.9861C9.99371 17.0861 10.8937 17.9861 11.9937 17.9861C13.0937 17.9861 13.9937 17.0861 13.9937 15.9861V14.4861H12.9937V15.9861Z"
                     fill="currentColor"
                   />
                   <path
-                    d="M12 2L5.42261 12.0855L12 15.9674V9.45369V2Z"
-                    fill="currentColor"
-                    fillOpacity="0.8"
-                  />
-                  <path
-                    d="M12 16.9789L11.9361 17.0566V21.8346L12 22.0001L18.5801 13.0991L12 16.9789Z"
+                    d="M16.4937 10.4861C16.4937 8.28614 14.7937 6.48614 12.4937 6.48614H11.4937C9.19371 6.48614 7.49371 8.28614 7.49371 10.4861V11.4861H8.49371V10.4861C8.49371 8.83614 9.84371 7.48614 11.4937 7.48614H12.4937C14.1437 7.48614 15.4937 8.83614 15.4937 10.4861V11.4861H16.4937V10.4861Z"
                     fill="currentColor"
                   />
                   <path
-                    d="M12 22.0001V16.9789L5.42261 13.0991L12 22.0001Z"
+                    d="M11.9937 13.9861C12.5437 13.9861 12.9937 13.5361 12.9937 12.9861C12.9937 12.4361 12.5437 11.9861 11.9937 11.9861C11.4437 11.9861 10.9937 12.4361 10.9937 12.9861C10.9937 13.5361 11.4437 13.9861 11.9937 13.9861Z"
                     fill="currentColor"
-                    fillOpacity="0.8"
-                  />
-                  <path
-                    d="M12 15.9674L18.5774 12.0855L12 9.45369V15.9674Z"
-                    fill="currentColor"
-                    fillOpacity="0.5"
-                  />
-                  <path
-                    d="M5.42261 12.0855L12 15.9674V9.45369L5.42261 12.0855Z"
-                    fill="currentColor"
-                    fillOpacity="0.7"
                   />
                 </svg>
               ),
-              valueUSD: account.crypto * CONVERSION_RATES.ETH_TO_USD,
+              valueUSD: account.crypto * CONVERSION_RATES.USDC_TO_USD,
               change: 2.5,
             },
           ])

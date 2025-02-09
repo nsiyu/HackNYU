@@ -12,6 +12,7 @@ import {
   GlobeAltIcon,
   CurrencyDollarIcon 
 } from '@heroicons/react/24/outline'
+import zeriVideo from '../assets/Zeri.mp4'
 
 function LandingPage() {
   const [scrolled, setScrolled] = useState(false)
@@ -48,7 +49,7 @@ function LandingPage() {
     {
       name: 'Sarah Johnson',
       role: 'Small Business Owner',
-      content: 'Zeri has transformed how I handle international payments. The integration between crypto and mobile money is seamless.',
+      content: 'Radio has transformed how I handle international payments. The integration between crypto and mobile money is seamless.',
       avatar: '/avatars/sarah.jpg',
       icon: UserGroupIcon,
       iconColor: 'bg-primary/10 text-primary group-hover:bg-primary/20'
@@ -64,7 +65,7 @@ function LandingPage() {
     {
       name: 'Emma Wilson',
       role: 'Digital Nomad',
-      content: 'I travel frequently and Zeri has become my go-to platform for managing multiple currencies and making cross-border payments.',
+      content: 'I travel frequently and Radio has become my go-to platform for managing multiple currencies and making cross-border payments.',
       avatar: '/avatars/emma.jpg',
       icon: CurrencyDollarIcon,
       iconColor: 'bg-amber-500/10 text-amber-500 group-hover:bg-amber-500/20'
@@ -83,7 +84,7 @@ function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-8">
             <Link to="/" className="font-display text-2xl font-bold text-primary flex items-center gap-2">
-              Zeri
+              Radio
             </Link>
             <div className="hidden md:flex space-x-6">
               <a href="#" className="text-sm hover:text-primary transition-colors">Buy Crypto</a>
@@ -179,7 +180,7 @@ function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-display font-bold mb-4">
-              See Zeri in Action
+              See Radio in Action
             </h2>
             <p className="text-gray-400 max-w-2xl mx-auto">
               Watch how easy it is to manage your finances across borders and currencies
@@ -188,14 +189,16 @@ function LandingPage() {
           
           <div className="rounded-xl bg-secondary/30 border border-secondary-light overflow-hidden">
             <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-              <iframe
-                src="https://www.youtube.com/embed/bNlNeC8E7wo"
-                title="Zeri Demo"
+              <video
                 className="absolute top-0 left-0 w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                frameBorder="0"
-              />
+                controls
+                autoPlay
+                muted
+                loop
+              >
+                <source src={zeriVideo} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
             </div>
           </div>
         </div>
@@ -208,7 +211,7 @@ function LandingPage() {
               Trusted by Users Worldwide
             </h2>
             <p className="text-gray-400 max-w-2xl mx-auto">
-              Join thousands of satisfied customers who have simplified their financial lives with Zeri
+              Join thousands of satisfied customers who have simplified their financial lives with Radio
             </p>
           </div>
 
@@ -248,7 +251,7 @@ function LandingPage() {
             to="/register" 
             className="inline-flex items-center gap-2 px-8 py-4 bg-primary hover:bg-primary-dark rounded-lg transition-colors font-medium group"
           >
-            Join Zeri
+            Join Radio
             <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>

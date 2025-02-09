@@ -65,7 +65,7 @@ function Login() {
         <Link to="/" className="block text-center mb-8">
           <div className="flex items-center justify-center gap-2">
             <span className="font-display text-2xl font-bold text-primary">
-              Zeri
+              Radio
             </span>
           </div>
         </Link>

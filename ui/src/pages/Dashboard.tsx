@@ -56,13 +56,13 @@ export default function Dashboard() {
         <div className="p-8">
           <div className="mb-3">
             <Link to="/" className="font-display text-2xl font-bold bg-gradient-to-r from-primary via-primary/70 to-primary-light text-transparent bg-clip-text hover:from-primary hover:via-primary-light hover:to-primary-light/80 transition-all">
-              Zeri
+              Radio
             </Link>
           </div>
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary-light/10 border border-secondary-light/30 w-fit">
             <PhoneIcon className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium bg-gradient-to-r from-primary/90 to-primary-light text-transparent bg-clip-text">
-              1-800-ZERI-AI
+              1-800-Radio
             </span>
           </div>
         </div>
@@ -165,7 +165,7 @@ export default function Dashboard() {
 
           <div className="w-96 border-l border-secondary-light/50 bg-secondary/10 flex flex-col">
             <div className="p-4 border-b border-secondary-light/50">
-              <h2 className="text-lg font-medium">Zeri Agent</h2>
+              <h2 className="text-lg font-medium">Radio Agent</h2>
             </div>
             <div className="flex-1 overflow-auto scrollbar-hide p-4">
               <div className="space-y-4">
