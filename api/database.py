@@ -14,7 +14,7 @@ from .models import (
 
 supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
 
-BASE_C1_URL = "api.nessieisreal.com"
+BASE_C1_URL = "http://api.nessieisreal.com"
 # def get_user_loans(user_id: int) -> Optional[List[LoanInfo]]:
 #     """Fetch all loans for a given user ID"""
 #     response = (
@@ -85,11 +85,11 @@ def get_c1_accounts(user_id: str) -> Optional[List[AccountInfo]]:
         response.raise_for_status()
 
         account_data = response.json()
-        return [
+        x = [
             AccountInfo(
-                _id=a["_id"],
+                id=a["_id"],
                 type=a["type"],
-                nickname=a["merchant_id"],
+                nickname=a["nickname"],
                 rewards=a["rewards"],
                 balance=a["balance"],
                 account_number=a["account_number"],
@@ -97,7 +97,7 @@ def get_c1_accounts(user_id: str) -> Optional[List[AccountInfo]]:
             )
             for a in account_data
         ]
-
+        return x
     except requests.exceptions.RequestException as e:
         print(f"Error fetching accounts: {e}")
         return None
@@ -111,7 +111,7 @@ def get_c1_account_info(account_id: str) -> Optional[AccountInfo]:
 
         a = response.json()
         return AccountInfo(
-            _id=a["_id"],
+            id=a["_id"],
             type=a["type"],
             nickname=a["merchant_id"],
             rewards=a["rewards"],
@@ -131,7 +131,7 @@ def get_c1_user_transactions(user_id: str) -> Optional[List[TransactionInfo]]:
         return None
     transactions = []
     for account in accounts:
-        curr_account_transactions = get_c1_account_transactions(account_id=account._id)
+        curr_account_transactions = get_c1_account_transactions(account_id=account.id)
         if curr_account_transactions is not None:
             transactions.extend(curr_account_transactions)
     return transactions
@@ -169,7 +169,7 @@ def get_c1_user_loans(user_id: str) -> Optional[List[LoanInfo]]:
         return None
     loans = []
     for account in accounts:
-        curr_account_loans = get_c1_account_loans(account_id=account._id)
+        curr_account_loans = get_c1_account_loans(account_id=account.id)
         if curr_account_loans is not None:
             loans.extend(curr_account_loans)
     return loans

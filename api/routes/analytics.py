@@ -8,13 +8,13 @@ from ..database import get_c1_customer, get_c1_user_transactions, get_sb_custome
 
 
 router = APIRouter()
-openai.api_key = settings.OPENAI_KEY
 
-open_ai_client = openai.OpenAI()
+
+open_ai_client = openai.OpenAI(api_key=settings.OPENAI_KEY)
 
 
 class UserSpendingHabitsRequest(BaseModel):
-    user_id: int
+    user_id: str
 
 
 @router.post("/spending_habits")
@@ -61,14 +61,15 @@ async def get_spending_habits(request: Request):
         transaction_str += f"transaction {idx}: amount: {transaction.amount}, description: {transaction.description}\n"
 
     user_info_str = f"USER - dependents: {additional_customer_info.number_of_dependents}, credit_score: {additional_customer_info.credit_score}, income: {additional_customer_info.income}, age: {additional_customer_info.age}"
-    report_prompt = f"Analyze the following transactions and user info and summerize spending habits in 2 sentences:\n USER {user_info_str} \n TRANSACTIONS {transaction_str}"
+    report_prompt = f"Analyze the following transactions and user info and summarize spending habits in 2 sentences. Speak directly to the user as if you are a customer representative: \n USER {user_info_str} \n TRANSACTIONS {transaction_str} \n\n Respond as if you are speaking to the user directly, using 'you' and 'your' instead of 'the user'."
 
     response = open_ai_client.chat.completions.create(
         model="gpt-4o-mini", messages=[{"role": "user", "content": report_prompt}]
     )
+
     return JSONResponse(
         status_code=200,
-        content={"result": {"summary": response["choices"][0]["message"]["content"]}},
+        content={"result": {"summary": response.choices[0].message.content}},
     )
 
 

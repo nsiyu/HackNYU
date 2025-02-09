@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     SUPABASE_URL: str
     SUPABASE_KEY: str
     OPENAI_KEY: str
+    OPENAI_ORG: str
     C1_KEY: str
     model_config = SettingsConfigDict(env_file=".env", extra="allow")
 

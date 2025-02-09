@@ -1,7 +1,12 @@
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-from ..database import supabase, get_c1_account_info, create_c1_transfer_account
+from ..database import (
+    supabase,
+    get_c1_account_info,
+    create_c1_transfer_account,
+    get_c1_user_transactions,
+)
 from ..config import logger
 
 router = APIRouter()
@@ -17,6 +22,19 @@ class TransferRequest(BaseModel):
     from_account: str = Field(..., description="Account ID of sender")
     to_account: str = Field(..., description="Account ID of recipient")
     amount: float = Field(..., description="Amount to transfer")
+
+
+@router.get("/transactions/{user_id}")
+async def get_transactions(user_id: str):
+    try:
+        transactions = get_c1_user_transactions(user_id)
+        if transactions:
+            return {"user_id": user_id, "transactions": transactions}
+
+    except ValueError as e:
+        return JSONResponse(
+            status_code=999,
+        )
 
 
 @router.post("/balance")
@@ -89,9 +107,9 @@ async def transfer_funds(request: Request):
             )
 
         create_c1_transfer_account(
-            from_account._id,
+            from_account.id,
             medium="balance",
-            payee_id=to_account._id,
+            payee_id=to_account.id,
             amount=data.amount,
             status="completed",
             description="Direct Transfer",

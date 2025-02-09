@@ -71,9 +71,9 @@ async def get_account_info(account_id: str):
 
 
 @router.get("/accounts/{user_id}", response_model=dict)
-async def get_user_accounts(user_id: int):
+async def get_user_accounts(user_id: str):
     """Fetch all accounts associated with a user"""
-    accounts = get_c1_account_info(user_id=user_id)
+    accounts = get_c1_accounts(user_id=user_id)
 
     if accounts:
         return {"user_id": user_id, "accounts": accounts}

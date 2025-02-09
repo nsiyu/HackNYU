@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 class AccountInfo(BaseModel):
-    _id: str
+    id: str
     type: str
     nickname: str
     rewards: int
