@@ -6,16 +6,38 @@ import {
   AppleIcon,
 } from "../components/icons/SocialIcons";
 import { PasswordStep } from "../components/login/PasswordStep";
+import { supabase } from "../lib/supabase";
 
 function Login() {
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<"email" | "password">("email");
+  const navigate = useNavigate();
 
   const handleEmailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (email.trim()) {
       setStep("password");
+    }
+  };
+
+  const handleLogin = async (password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      if (data.user) {
+        navigate("/dashboard");
+      }
+    } catch (err) {
+      setError("An error occurred during login");
     }
   };
 
@@ -73,7 +95,6 @@ function Login() {
               >
                 Next
               </button>
-
               <div className="relative my-8">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-secondary-light"></div>
@@ -110,10 +131,8 @@ function Login() {
             <PasswordStep
               email={email}
               onBack={() => setStep("email")}
-              onSubmit={(password) => {
-                console.log("Logging in with:", email, password);
-                navigate("/dashboard");
-              }}
+              onSubmit={handleLogin}
+              error={error}
             />
           )}
 
@@ -131,5 +150,4 @@ function Login() {
     </div>
   );
 }
-
 export default Login;

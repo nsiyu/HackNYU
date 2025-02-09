@@ -1,86 +1,264 @@
-import { useState } from 'react'
-import { 
-  MagnifyingGlassIcon, 
+import { useState, useEffect } from "react";
+import {
+  MagnifyingGlassIcon,
   ShieldCheckIcon,
   CalendarIcon,
   ClockIcon,
   ChatBubbleLeftRightIcon,
-  UserCircleIcon
-} from '@heroicons/react/24/outline'
+  UserCircleIcon,
+} from "@heroicons/react/24/outline";
 
 interface Transcript {
-  id: string
-  date: string
-  duration: string
-  topic: string
-  status: 'completed' | 'in-progress'
-  transcript: string[]
-  agentName?: string
-  agentAvatar?: string
+  id: string;
+  date: string;
+  duration: string;
+  topic: string;
+  status: "completed" | "in-progress";
+  transcript: string[];
+  agentName?: string;
+  agentAvatar?: string;
 }
 
-const sampleTranscripts: Transcript[] = [
-  {
-    id: '1',
-    date: '2024-03-15 14:30',
-    duration: '5m 23s',
-    topic: 'Account Verification',
-    status: 'completed',
-    agentName: 'Sarah Johnson',
-    transcript: [
-      'AI: Hello! How can I help you today?',
-      'You: I need help verifying my account',
-      'AI: I can help you with that. First, could you confirm your email address?',
-      'You: Sure, it\'s john@example.com',
-      'AI: Thank you. I can see your account. Let\'s proceed with verification...'
-    ]
-  },
-  {
-    id: '2',
-    date: '2024-03-14 10:15',
-    duration: '3m 45s',
-    topic: 'Transaction Issue',
-    status: 'completed',
-    agentName: 'Michael Chen',
-    transcript: [
-      'AI: Welcome to Zeri support. How may I assist you?',
-      'You: I have a pending transaction that hasn\'t cleared',
-      'AI: I\'ll help you check that. Can you provide the transaction ID?'
-    ]
-  },
-  {
-    id: '3',
-    date: '2024-03-13 16:45',
-    duration: '8m 12s',
-    topic: 'Wallet Setup',
-    status: 'in-progress',
-    agentName: 'Emma Wilson',
-    transcript: [
-      'AI: Hi there! What can I help you with today?',
-      'You: I\'m trying to set up my wallet but getting an error',
-      'AI: I understand. Let\'s troubleshoot this together. What error message are you seeing?'
-    ]
-  }
-]
+interface Message {
+  role: string;
+  content: string;
+}
+
+interface ChatInterfaceProps {
+  transcriptId: string;
+  messages: string[];
+  onSendMessage: (message: string) => void;
+  newMessage: string;
+  onMessageChange: (message: string) => void;
+}
+
+function ChatInterface({
+  transcriptId,
+  messages,
+  onSendMessage,
+  newMessage,
+  onMessageChange,
+}: ChatInterfaceProps) {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newMessage.trim()) {
+      onSendMessage(newMessage.trim());
+    }
+  };
+
+  return (
+    <div className="mt-4 border-t border-secondary-light/20 pt-4">
+      <div className="space-y-4 mb-4 max-h-60 overflow-y-auto">
+        {messages.map((message, index) => (
+          <div
+            key={index}
+            className={`flex gap-3 ${
+              message.startsWith("AI:") ? "justify-start" : "justify-end"
+            }`}
+          >
+            <div
+              className={`max-w-[80%] rounded-2xl px-4 py-2 ${
+                message.startsWith("AI:") ? "bg-secondary/30" : "bg-primary/20"
+              }`}
+            >
+              <div className="text-sm">{message}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <form onSubmit={handleSubmit} className="flex gap-2">
+        <input
+          type="text"
+          value={newMessage}
+          onChange={(e) => onMessageChange(e.target.value)}
+          placeholder="Ask a follow-up question..."
+          className="flex-1 bg-secondary/50 border border-secondary-light rounded-lg px-4 py-2 text-sm focus:border-primary outline-none"
+        />
+        <button
+          type="submit"
+          className="px-4 py-2 bg-primary hover:bg-primary-dark rounded-lg transition-colors text-sm font-medium"
+        >
+          Send
+        </button>
+      </form>
+    </div>
+  );
+}
 
 export function TranscriptsPage() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedTranscript, setSelectedTranscript] = useState<Transcript | null>(null)
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTranscript, setSelectedTranscript] =
+    useState<Transcript | null>(null);
+  const [transcripts, setTranscripts] = useState<Transcript[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeChats, setActiveChats] = useState<{[key: string]: string[]}>({});
+  const [newMessage, setNewMessage] = useState<{[key: string]: string}>({});
 
-  const filteredTranscripts = sampleTranscripts.filter(transcript => 
-    transcript.topic.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    transcript.agentName?.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const fetchEndedCalls = async () => {
+    const API_KEY = import.meta.env.VITE_RETELL_API_KEY;
+    const endpoint = "https://api.retellai.com/v2/list-calls";
+
+    const now = Date.now();
+    const oneHourAgo = now - 3600000; // 1 hour ago in milliseconds
+
+    try {
+      setIsLoading(true);
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          call_status: "ended",
+          end_timestamp: {
+            gte: oneHourAgo,
+            lte: now,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} - ${response.statusText}`);
+      }
+
+      const rawData = await response.json();
+      console.log("Raw API Response:", rawData);
+
+      if (!rawData) {
+        console.error("No data received from API");
+        setTranscripts([]);
+        return;
+      }
+
+      const data = Array.isArray(rawData) ? rawData : rawData.calls || [];
+      console.log("Processed data:", data);
+
+      const transformedTranscripts: Transcript[] = [];
+
+      for (const call of data) {
+        if (!call || typeof call !== "object") continue;
+
+        try {
+          const transcript =
+            call.transcript_object?.map(
+              (msg: Message) =>
+                `${msg.role === "agent" ? "AI" : "You"}: ${msg.content || ""}`
+            ) || [];
+
+          transformedTranscripts.push({
+            id: call.call_id || `unknown-${Date.now()}`,
+            date: call.start_timestamp
+              ? new Date(call.start_timestamp).toLocaleString()
+              : new Date().toLocaleString(),
+            duration: call.duration_ms
+              ? formatDuration(call.duration_ms)
+              : "0s",
+            topic:
+              call.call_analysis?.call_summary ||
+              call.transcript?.substring(0, 50) ||
+              "" ||
+              `Call ${call.call_id}`,
+            status: call.call_status === "ended" ? "completed" : "in-progress",
+            transcript,
+            agentName: "AI Assistant",
+          });
+        } catch (err) {
+          console.error("Error processing call:", call, err);
+          continue;
+        }
+      }
+
+      console.log("Transformed transcripts:", transformedTranscripts);
+      setTranscripts(transformedTranscripts);
+      setError(null);
+    } catch (err) {
+      console.error("Failed to fetch call history:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch transcripts"
+      );
+      setTranscripts([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEndedCalls();
+    // Set up polling every minute
+    const interval = setInterval(fetchEndedCalls, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatDuration = (ms: number): string => {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+
+    if (minutes === 0) {
+      return `${remainingSeconds}s`;
+    }
+
+    return `${minutes}m ${remainingSeconds}s`;
+  };
+
+  const filteredTranscripts = transcripts.filter(
+    (transcript) =>
+      transcript.topic.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      transcript.agentName?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleStartChat = (transcriptId: string) => {
+    if (!activeChats[transcriptId]) {
+      setActiveChats(prev => ({
+        ...prev,
+        [transcriptId]: ["AI: How can I help you with this conversation?"]
+      }));
+      setNewMessage(prev => ({
+        ...prev,
+        [transcriptId]: ""
+      }));
+    }
+  };
+
+  const handleSendMessage = (transcriptId: string, message: string) => {
+    setActiveChats(prev => ({
+      ...prev,
+      [transcriptId]: [...(prev[transcriptId] || []), `You: ${message}`, "AI: I'll help you with that."]
+    }));
+    setNewMessage(prev => ({
+      ...prev,
+      [transcriptId]: ""
+    }));
+  };
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-full text-red-500">
+        {error}
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full text-gray-400">
+        Loading transcripts...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-medium">Support Transcripts</h2>
-        <button 
+        <button
+          onClick={fetchEndedCalls}
           className="px-4 py-2 bg-primary hover:bg-primary-dark rounded-lg transition-colors text-sm font-medium flex items-center gap-2"
         >
           <ChatBubbleLeftRightIcon className="w-4 h-4" />
-          New Chat
+          Refresh
         </button>
       </div>
 
@@ -100,18 +278,20 @@ export function TranscriptsPage() {
           <div
             key={transcript.id}
             className="rounded-xl border border-secondary-light bg-secondary/10 hover:bg-secondary-light/10 transition-all overflow-hidden cursor-pointer"
-            onClick={() => setSelectedTranscript(
-              selectedTranscript?.id === transcript.id ? null : transcript
-            )}
+            onClick={() =>
+              setSelectedTranscript(
+                selectedTranscript?.id === transcript.id ? null : transcript
+              )
+            }
           >
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                     {transcript.agentAvatar ? (
-                      <img 
-                        src={transcript.agentAvatar} 
-                        alt={transcript.agentName} 
+                      <img
+                        src={transcript.agentAvatar}
+                        alt={transcript.agentName}
                         className="w-12 h-12 rounded-full"
                       />
                     ) : (
@@ -122,11 +302,13 @@ export function TranscriptsPage() {
                     <h3 className="font-medium text-lg">{transcript.topic}</h3>
                   </div>
                 </div>
-                <div className={`px-3 py-1 rounded-full text-sm flex items-center gap-1 ${
-                  transcript.status === 'completed' 
-                    ? 'bg-emerald-500/10 text-emerald-400' 
-                    : 'bg-amber-500/10 text-amber-400'
-                }`}>
+                <div
+                  className={`px-3 py-1 rounded-full text-sm flex items-center gap-1 ${
+                    transcript.status === "completed"
+                      ? "bg-emerald-500/10 text-emerald-400"
+                      : "bg-amber-500/10 text-amber-400"
+                  }`}
+                >
                   <ShieldCheckIcon className="w-4 h-4" />
                   {transcript.status}
                 </div>
@@ -147,34 +329,60 @@ export function TranscriptsPage() {
               {selectedTranscript?.id === transcript.id && (
                 <div className="mt-6 space-y-3 bg-secondary/20 rounded-lg p-4">
                   {transcript.transcript.map((message, index) => {
-                    const [speaker, text] = message.split(': ')
-                    const isAI = speaker === 'AI'
+                    const [speaker, text] = message.split(": ");
+                    const isAI = speaker === "AI";
                     return (
-                      <div 
-                        key={index} 
+                      <div
+                        key={index}
                         className={`flex gap-3 ${
-                          isAI ? 'justify-start' : 'justify-end'
+                          isAI ? "justify-start" : "justify-end"
                         }`}
                       >
-                        <div className={`max-w-[80%] rounded-2xl px-4 py-2 ${
-                          isAI 
-                            ? 'bg-secondary/30' 
-                            : 'bg-primary/20'
-                        }`}>
+                        <div
+                          className={`max-w-[80%] rounded-2xl px-4 py-2 ${
+                            isAI ? "bg-secondary/30" : "bg-primary/20"
+                          }`}
+                        >
                           <div className="text-xs font-medium mb-1 text-gray-400">
-                            {isAI ? transcript.agentName : 'You'}
+                            {isAI ? transcript.agentName : "You"}
                           </div>
                           <div className="text-sm">{text}</div>
                         </div>
                       </div>
-                    )}
-                  )}
+                    );
+                  })}
                 </div>
+              )}
+
+              {!activeChats[transcript.id] ? (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStartChat(transcript.id);
+                  }}
+                  className="mt-4 w-full px-4 py-2 bg-secondary/30 hover:bg-secondary/50 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                >
+                  <ChatBubbleLeftRightIcon className="w-4 h-4" />
+                  Ask a follow-up question
+                </button>
+              ) : (
+                <ChatInterface
+                  transcriptId={transcript.id}
+                  messages={activeChats[transcript.id]}
+                  onSendMessage={(message) => handleSendMessage(transcript.id, message)}
+                  newMessage={newMessage[transcript.id] || ""}
+                  onMessageChange={(message) => 
+                    setNewMessage(prev => ({
+                      ...prev,
+                      [transcript.id]: message
+                    }))
+                  }
+                />
               )}
             </div>
           </div>
         ))}
       </div>
     </div>
-  )
-} 
+  );
+}

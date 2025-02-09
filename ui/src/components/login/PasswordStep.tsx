@@ -1,20 +1,26 @@
-import { useState } from 'react'
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
+import { useState } from "react";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
 interface PasswordStepProps {
-  email: string
-  onBack: () => void
-  onSubmit: (password: string) => void
+  email: string;
+  onBack: () => void;
+  onSubmit: (password: string) => void;
+  error?: string | null;
 }
 
-export function PasswordStep({ email, onBack, onSubmit }: PasswordStepProps) {
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
+export function PasswordStep({
+  email,
+  onBack,
+  onSubmit,
+  error,
+}: PasswordStepProps) {
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSubmit(password)
-  }
+    e.preventDefault();
+    onSubmit(password);
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -25,7 +31,7 @@ export function PasswordStep({ email, onBack, onSubmit }: PasswordStepProps) {
 
       <div className="relative">
         <input
-          type={showPassword ? 'text' : 'password'}
+          type={showPassword ? "text" : "password"}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder=" "
@@ -47,8 +53,13 @@ export function PasswordStep({ email, onBack, onSubmit }: PasswordStepProps) {
         </button>
       </div>
 
+      {error && <div className="text-red-500 text-sm">{error}</div>}
+
       <div className="flex justify-end">
-        <button type="button" className="text-sm text-primary hover:text-primary-light transition-colors">
+        <button
+          type="button"
+          className="text-sm text-primary hover:text-primary-light transition-colors"
+        >
           Forgot password?
         </button>
       </div>
@@ -57,17 +68,17 @@ export function PasswordStep({ email, onBack, onSubmit }: PasswordStepProps) {
         <button
           type="button"
           onClick={onBack}
-          className="flex-1 py-3 border border-secondary-light hover:bg-secondary-light/50 rounded-lg transition-colors font-medium"
+          className="px-4 py-3 rounded-lg border border-secondary-light hover:bg-secondary-light/50 transition-colors flex-1"
         >
           Back
         </button>
         <button
           type="submit"
-          className="flex-1 py-3 bg-primary hover:bg-primary-dark rounded-lg transition-colors font-medium"
+          className="px-4 py-3 bg-primary hover:bg-primary-dark rounded-lg transition-colors flex-1 font-medium"
         >
-          Log In
+          Log in
         </button>
       </div>
     </form>
-  )
-} 
+  );
+}
