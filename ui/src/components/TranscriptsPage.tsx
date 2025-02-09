@@ -33,13 +33,17 @@ interface ChatInterfaceProps {
 }
 
 interface WebSocketTranscript {
-  interaction_type: 'ping_pong' | 'update_only' | 'response_required' | 'reminder_required';
+  interaction_type:
+    | "ping_pong"
+    | "update_only"
+    | "response_required"
+    | "reminder_required";
   transcript?: {
     role: string;
     content: string;
   }[];
   transcript_with_tool_calls?: any[];
-  turntaking?: 'agent_turn' | 'user_turn';
+  turntaking?: "agent_turn" | "user_turn";
   timestamp?: number;
 }
 
@@ -57,8 +61,8 @@ function ChatInterface({
   };
 
   return (
-    <div className='mt-4 border-t border-secondary-light/20 pt-4'>
-      <div className='space-y-4 mb-4 max-h-60 overflow-y-auto'>
+    <div className="mt-4 border-t border-secondary-light/20 pt-4">
+      <div className="space-y-4 mb-4 max-h-60 overflow-y-auto">
         {messages.map((message, index) => (
           <div
             key={index}
@@ -71,22 +75,22 @@ function ChatInterface({
                 message.startsWith("AI:") ? "bg-secondary/30" : "bg-primary/20"
               }`}
             >
-              <div className='text-sm'>{message}</div>
+              <div className="text-sm">{message}</div>
             </div>
           </div>
         ))}
       </div>
-      <form onSubmit={handleSubmit} className='flex gap-2'>
+      <form onSubmit={handleSubmit} className="flex gap-2">
         <input
-          type='text'
+          type="text"
           value={newMessage}
           onChange={(e) => onMessageChange(e.target.value)}
-          placeholder='Ask a follow-up question...'
-          className='flex-1 bg-secondary/50 border border-secondary-light rounded-lg px-4 py-2 text-sm focus:border-primary outline-none'
+          placeholder="Ask a follow-up question..."
+          className="flex-1 bg-secondary/50 border border-secondary-light rounded-lg px-4 py-2 text-sm focus:border-primary outline-none"
         />
         <button
-          type='submit'
-          className='px-4 py-2 bg-primary hover:bg-primary-dark rounded-lg transition-colors text-sm font-medium'
+          type="submit"
+          className="px-4 py-2 bg-primary hover:bg-primary-dark rounded-lg transition-colors text-sm font-medium"
         >
           Send
         </button>
@@ -97,15 +101,22 @@ function ChatInterface({
 
 export function TranscriptsPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTranscript, setSelectedTranscript] = useState<Transcript | null>(null);
+  const [selectedTranscript, setSelectedTranscript] =
+    useState<Transcript | null>(null);
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeChats, setActiveChats] = useState<{ [key: string]: string[] }>({});
+  const [activeChats, setActiveChats] = useState<{ [key: string]: string[] }>(
+    {}
+  );
   const [newMessage, setNewMessage] = useState<{ [key: string]: string }>({});
-  const [liveTranscripts, setLiveTranscripts] = useState<{ [key: string]: WebSocketTranscript }>({});
+  const [liveTranscripts, setLiveTranscripts] = useState<{
+    [key: string]: WebSocketTranscript;
+  }>({});
   // NEW: State to hold the live transcription text for the currently active call.
-  const [realtimeTranscription, setRealtimeTranscription] = useState<string>("Waiting for live transcription...");
+  const [realtimeTranscription, setRealtimeTranscription] = useState<string>(
+    "Waiting for live transcription..."
+  );
   // Optional: State to hold additional realtime events (for debugging)
   const [realtimeEvents, setRealtimeEvents] = useState<any[]>([]);
 
@@ -164,7 +175,10 @@ export function TranscriptsPage() {
         if (data.interaction_type === "update_only" && data.transcript) {
           // Create a string from the transcript array.
           const updatedTranscript = data.transcript
-            .map((msg) => `${msg.role === "agent" ? "AI" : "You"}: ${msg.content || ""}`)
+            .map(
+              (msg) =>
+                `${msg.role === "agent" ? "AI" : "You"}: ${msg.content || ""}`
+            )
             .join("\n");
           // Update the per-call liveTranscripts (if used elsewhere)
           setLiveTranscripts((prev) => ({
@@ -175,7 +189,11 @@ export function TranscriptsPage() {
           setRealtimeTranscription(updatedTranscript);
         }
       } catch (error) {
-        console.error("Error processing WebSocket message for call:", callId, error);
+        console.error(
+          "Error processing WebSocket message for call:",
+          callId,
+          error
+        );
       }
     };
 
@@ -262,7 +280,9 @@ export function TranscriptsPage() {
       setError(null);
     } catch (err) {
       console.error("Failed to fetch call history:", err);
-      setError(err instanceof Error ? err.message : "Failed to fetch transcripts");
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch transcripts"
+      );
       setTranscripts([]);
     } finally {
       setIsLoading(false);
@@ -362,11 +382,11 @@ export function TranscriptsPage() {
 
   const fetchSpendingPlan = async (userId: string) => {
     // const endpoint = "https:yyo//api.retellai.com/v2/spending_plan";
-    const endpoint = "http://127.0.0.1:8000/analytics/spending_plan";
+    const endpoint = "https://temp-8zyr.onrender.com/analytics/spending_plan/";
 
     // const endpoint = "http://localhost:8000/analytics/spending_plan";
     console.log(userId);
-
+    const user_id1 = 1;
     try {
       const response = await fetch(endpoint, {
         method: "POST",
@@ -376,7 +396,7 @@ export function TranscriptsPage() {
           "Access-Control-Allow-Methods": "POST, OPTIONS",
           "Access-Control-Allow-Headers": "Content-Type, Authorization",
         },
-        body: JSON.stringify({ args: { user_id: "67a794709683f20dd518bbec" } }),
+        body: JSON.stringify({ args: { user_id: user_id1 } }),
       });
 
       if (!response.ok) {
@@ -449,7 +469,7 @@ export function TranscriptsPage() {
 
   if (error) {
     return (
-      <div className='flex items-center justify-center h-full text-red-500'>
+      <div className="flex items-center justify-center h-full text-red-500">
         {error}
       </div>
     );
@@ -457,63 +477,63 @@ export function TranscriptsPage() {
 
   if (isLoading) {
     return (
-      <div className='flex items-center justify-center h-full text-gray-400'>
+      <div className="flex items-center justify-center h-full text-gray-400">
         Loading transcripts...
       </div>
     );
   }
 
   return (
-    <div className='space-y-6'>
-      <div className='flex items-center justify-between'>
-        <h2 className='text-xl font-medium'>Support Transcripts</h2>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-medium">Support Transcripts</h2>
         <button
           onClick={fetchEndedCalls}
-          className='px-4 py-2 bg-primary hover:bg-primary-dark rounded-lg transition-colors text-sm font-medium flex items-center gap-2'
+          className="px-4 py-2 bg-primary hover:bg-primary-dark rounded-lg transition-colors text-sm font-medium flex items-center gap-2"
         >
-          <ChatBubbleLeftRightIcon className='w-4 h-4' />
+          <ChatBubbleLeftRightIcon className="w-4 h-4" />
           Refresh
         </button>
       </div>
 
-      <div className='relative'>
+      <div className="relative">
         <input
-          type='text'
+          type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder='Search transcripts...'
-          className='w-full bg-secondary/50 border border-secondary-light rounded-lg pl-10 pr-4 py-2 text-sm focus:border-primary outline-none'
+          placeholder="Search transcripts..."
+          className="w-full bg-secondary/50 border border-secondary-light rounded-lg pl-10 pr-4 py-2 text-sm focus:border-primary outline-none"
         />
-        <MagnifyingGlassIcon className='absolute left-3 top-2.5 w-5 h-5 text-gray-400' />
+        <MagnifyingGlassIcon className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
       </div>
 
-      <div className='space-y-4'>
+      <div className="space-y-4">
         {filteredTranscripts.map((transcript) => (
           <div
             key={transcript.id}
-            className='rounded-xl border border-secondary-light bg-secondary/10 hover:bg-secondary-light/10 transition-all overflow-hidden cursor-pointer'
+            className="rounded-xl border border-secondary-light bg-secondary/10 hover:bg-secondary-light/10 transition-all overflow-hidden cursor-pointer"
             onClick={() =>
               setSelectedTranscript(
                 selectedTranscript?.id === transcript.id ? null : transcript
               )
             }
           >
-            <div className='p-6'>
-              <div className='flex items-center justify-between mb-4'>
-                <div className='flex items-center gap-4'>
-                  <div className='w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center'>
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                     {transcript.agentAvatar ? (
                       <img
                         src={transcript.agentAvatar}
                         alt={transcript.agentName}
-                        className='w-12 h-12 rounded-full'
+                        className="w-12 h-12 rounded-full"
                       />
                     ) : (
-                      <UserCircleIcon className='w-6 h-6' />
+                      <UserCircleIcon className="w-6 h-6" />
                     )}
                   </div>
                   <div>
-                    <h3 className='font-medium text-lg'>{transcript.topic}</h3>
+                    <h3 className="font-medium text-lg">{transcript.topic}</h3>
                   </div>
                 </div>
                 <div
@@ -523,34 +543,35 @@ export function TranscriptsPage() {
                       : "bg-amber-500/10 text-amber-400"
                   }`}
                 >
-                  <ShieldCheckIcon className='w-4 h-4' />
+                  <ShieldCheckIcon className="w-4 h-4" />
                   {transcript.status}
                 </div>
               </div>
 
-              <div className='flex items-center gap-4 text-sm text-gray-400'>
-                <div className='flex items-center gap-1'>
-                  <CalendarIcon className='w-4 h-4' />
+              <div className="flex items-center gap-4 text-sm text-gray-400">
+                <div className="flex items-center gap-1">
+                  <CalendarIcon className="w-4 h-4" />
                   {transcript.date}
                 </div>
                 <div>•</div>
-                <div className='flex items-center gap-1'>
-                  <ClockIcon className='w-4 h-4' />
+                <div className="flex items-center gap-1">
+                  <ClockIcon className="w-4 h-4" />
                   {transcript.duration}
                 </div>
               </div>
 
-              {transcript.status === "in-progress" && liveTranscripts[transcript.id] && (
-                <div className="px-6 py-3 bg-primary/5 border-t border-primary/20">
-                  <div className="flex items-center gap-2 text-sm text-primary">
-                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                    Live Transcript
+              {transcript.status === "in-progress" &&
+                liveTranscripts[transcript.id] && (
+                  <div className="px-6 py-3 bg-primary/5 border-t border-primary/20">
+                    <div className="flex items-center gap-2 text-sm text-primary">
+                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                      Live Transcript
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {selectedTranscript?.id === transcript.id && (
-                <div className='mt-6 space-y-3 bg-secondary/20 rounded-lg p-4'>
+                <div className="mt-6 space-y-3 bg-secondary/20 rounded-lg p-4">
                   {transcript.transcript.map((message, index) => {
                     const [speaker, text] = message.split(": ");
                     const isAI = speaker === "AI";
@@ -566,10 +587,10 @@ export function TranscriptsPage() {
                             isAI ? "bg-secondary/30" : "bg-primary/20"
                           }`}
                         >
-                          <div className='text-xs font-medium mb-1 text-gray-400'>
+                          <div className="text-xs font-medium mb-1 text-gray-400">
                             {isAI ? transcript.agentName : "You"}
                           </div>
-                          <div className='text-sm'>{text}</div>
+                          <div className="text-sm">{text}</div>
                         </div>
                       </div>
                     );
@@ -583,9 +604,9 @@ export function TranscriptsPage() {
                     e.stopPropagation();
                     handleStartChat(transcript.id);
                   }}
-                  className='mt-4 w-full px-4 py-2 bg-secondary/30 hover:bg-secondary/50 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2'
+                  className="mt-4 w-full px-4 py-2 bg-secondary/30 hover:bg-secondary/50 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
                 >
-                  <ChatBubbleLeftRightIcon className='w-4 h-4' />
+                  <ChatBubbleLeftRightIcon className="w-4 h-4" />
                   Ask a follow-up question
                 </button>
               ) : (
