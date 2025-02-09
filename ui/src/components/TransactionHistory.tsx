@@ -85,7 +85,33 @@ export function TransactionHistory() {
         throw fetchError;
       }
 
-      setTransactions(data || []);
+      // Process transactions to fetch recipient names
+      if (data) {
+        const processedTransactions = await Promise.all(
+          data.map(async (transaction) => {
+            // Check if recipient is a number (user_id)
+            if (transaction.recipient && /^\d+$/.test(transaction.recipient)) {
+              const { data: userData, error: userError } = await supabase
+                .from("users")
+                .select("first_name, last_name")
+                .eq("user_id", transaction.recipient)
+                .single();
+
+              if (!userError && userData) {
+                return {
+                  ...transaction,
+                  recipient: `${userData.first_name} ${userData.last_name}`,
+                };
+              }
+            }
+            return transaction;
+          })
+        );
+        setTransactions(processedTransactions);
+      } else {
+        setTransactions([]);
+      }
+
       setError(null);
     } catch (err) {
       console.error("Error fetching transactions:", err);
@@ -222,14 +248,14 @@ export function TransactionHistory() {
                 }`}
               >
                 <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-start justify-between mb-2 mt-4">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center">
                         <Icon className="w-6 h-6" />
                       </div>
                       <div>
                         <h3 className="font-medium text-lg mb-1">
-                          {transaction.type || "Transaction"} #{transaction.id}
+                          {transaction.type || "Transaction"}
                           {transaction.recipient &&
                             ` • ${transaction.recipient}`}
                         </h3>
@@ -241,15 +267,15 @@ export function TransactionHistory() {
                     </div>
                     <div className="text-right">
                       {transaction.from_amount ? (
-                        <div className="font-medium">
+                        <div className="text-3xl font-bold mt-6">
                           {transaction.from_amount.amount}{" "}
                           {transaction.from_amount.currency} →{" "}
                           {transaction.to_amount?.amount}{" "}
                           {transaction.to_amount?.currency}
                         </div>
                       ) : (
-                        <div className="font-medium">
-                          {transaction.currency}{" "}
+                        <div className="text-3xl font-bold mt-3">
+                          {transaction.currency}{" "} $
                           {transaction.amount.toLocaleString("en-US", {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
