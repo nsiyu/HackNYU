@@ -47,8 +47,8 @@ function ChatInterface({
   };
 
   return (
-    <div className="mt-4 border-t border-secondary-light/20 pt-4">
-      <div className="space-y-4 mb-4 max-h-60 overflow-y-auto">
+    <div className='mt-4 border-t border-secondary-light/20 pt-4'>
+      <div className='space-y-4 mb-4 max-h-60 overflow-y-auto'>
         {messages.map((message, index) => (
           <div
             key={index}
@@ -61,22 +61,22 @@ function ChatInterface({
                 message.startsWith("AI:") ? "bg-secondary/30" : "bg-primary/20"
               }`}
             >
-              <div className="text-sm">{message}</div>
+              <div className='text-sm'>{message}</div>
             </div>
           </div>
         ))}
       </div>
-      <form onSubmit={handleSubmit} className="flex gap-2">
+      <form onSubmit={handleSubmit} className='flex gap-2'>
         <input
-          type="text"
+          type='text'
           value={newMessage}
           onChange={(e) => onMessageChange(e.target.value)}
-          placeholder="Ask a follow-up question..."
-          className="flex-1 bg-secondary/50 border border-secondary-light rounded-lg px-4 py-2 text-sm focus:border-primary outline-none"
+          placeholder='Ask a follow-up question...'
+          className='flex-1 bg-secondary/50 border border-secondary-light rounded-lg px-4 py-2 text-sm focus:border-primary outline-none'
         />
         <button
-          type="submit"
-          className="px-4 py-2 bg-primary hover:bg-primary-dark rounded-lg transition-colors text-sm font-medium"
+          type='submit'
+          className='px-4 py-2 bg-primary hover:bg-primary-dark rounded-lg transition-colors text-sm font-medium'
         >
           Send
         </button>
@@ -92,8 +92,10 @@ export function TranscriptsPage() {
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeChats, setActiveChats] = useState<{[key: string]: string[]}>({});
-  const [newMessage, setNewMessage] = useState<{[key: string]: string}>({});
+  const [activeChats, setActiveChats] = useState<{ [key: string]: string[] }>(
+    {}
+  );
+  const [newMessage, setNewMessage] = useState<{ [key: string]: string }>({});
 
   const fetchEndedCalls = async () => {
     const API_KEY = import.meta.env.VITE_RETELL_API_KEY;
@@ -211,31 +213,107 @@ export function TranscriptsPage() {
 
   const handleStartChat = (transcriptId: string) => {
     if (!activeChats[transcriptId]) {
-      setActiveChats(prev => ({
+      setActiveChats((prev) => ({
         ...prev,
-        [transcriptId]: ["AI: How can I help you with this conversation?"]
+        [transcriptId]: ["AI: How can I help you with this conversation?"],
       }));
-      setNewMessage(prev => ({
+      setNewMessage((prev) => ({
         ...prev,
-        [transcriptId]: ""
+        [transcriptId]: "",
       }));
     }
   };
 
-  const handleSendMessage = (transcriptId: string, message: string) => {
-    setActiveChats(prev => ({
-      ...prev,
-      [transcriptId]: [...(prev[transcriptId] || []), `You: ${message}`, "AI: I'll help you with that."]
-    }));
-    setNewMessage(prev => ({
-      ...prev,
-      [transcriptId]: ""
-    }));
+  const fetchSpendingPlan = async (userId: string) => {
+    // const endpoint = "https:yyo//api.retellai.com/v2/spending_plan";
+    const endpoint = "http://127.0.0.1:8000/analytics/spending_plan";
+
+    // const endpoint = "http://localhost:8000/analytics/spending_plan";
+    console.log(userId);
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        },
+        body: JSON.stringify({ args: { user_id: "67a794709683f20dd518bbec" } }),
+      });
+
+      if (!response.ok) {
+        // throw new Error(`Error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.plan) {
+        return `Spending Plan Summary: ${data.plan.spending_plan_summary}\n
+        - Housing: $${data.plan.housing_amount}\n
+        - Food: $${data.plan.food_amount}\n
+        - Shopping: $${data.plan.shopping_amount}\n
+        - Entertainment: $${data.plan.entertainment_amount}\n
+        - Savings: $${data.plan.saving_amount}`;
+      } else {
+        throw new Error("Invalid response format");
+      }
+    } catch (error) {
+      // console.error("Error fetching spending plan:", error);
+      // return "AI: Sorry, I couldn't fetch the spending plan.";
+      return error;
+    }
   };
+
+  const handleSendMessage = async (transcriptId: string, message: string) => {
+    setActiveChats((prev) => ({
+      ...prev,
+      [transcriptId]: [...(prev[transcriptId] || []), `You: ${message}`],
+    }));
+
+    setNewMessage((prev) => ({
+      ...prev,
+      [transcriptId]: "",
+    }));
+
+    try {
+      setIsLoading(true);
+
+      // Fetch AI-generated spending plan
+      const aiResponse = await fetchSpendingPlan(transcriptId);
+
+      setActiveChats((prev) => ({
+        ...prev,
+        [transcriptId]: [...prev[transcriptId], `AI: ${aiResponse}`],
+      }));
+    } catch (error) {
+      console.error("Failed to get AI response:", error);
+      setActiveChats((prev) => ({
+        ...prev,
+        [transcriptId]: [
+          ...prev[transcriptId],
+          "AI: Sorry, something went wrong.",
+        ],
+      }));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // const handleSendMessage = (transcriptId: string, message: string) => {
+  //   setActiveChats(prev => ({
+  //     ...prev,
+  //     [transcriptId]: [...(prev[transcriptId] || []), `You: ${message}`, "AI: I'll help you with that."]
+  //   }));
+  //   setNewMessage(prev => ({
+  //     ...prev,
+  //     [transcriptId]: ""
+  //   }));
+  // };
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-full text-red-500">
+      <div className='flex items-center justify-center h-full text-red-500'>
         {error}
       </div>
     );
@@ -243,63 +321,63 @@ export function TranscriptsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-400">
+      <div className='flex items-center justify-center h-full text-gray-400'>
         Loading transcripts...
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-medium">Support Transcripts</h2>
+    <div className='space-y-6'>
+      <div className='flex items-center justify-between'>
+        <h2 className='text-xl font-medium'>Support Transcripts</h2>
         <button
           onClick={fetchEndedCalls}
-          className="px-4 py-2 bg-primary hover:bg-primary-dark rounded-lg transition-colors text-sm font-medium flex items-center gap-2"
+          className='px-4 py-2 bg-primary hover:bg-primary-dark rounded-lg transition-colors text-sm font-medium flex items-center gap-2'
         >
-          <ChatBubbleLeftRightIcon className="w-4 h-4" />
+          <ChatBubbleLeftRightIcon className='w-4 h-4' />
           Refresh
         </button>
       </div>
 
-      <div className="relative">
+      <div className='relative'>
         <input
-          type="text"
+          type='text'
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search transcripts..."
-          className="w-full bg-secondary/50 border border-secondary-light rounded-lg pl-10 pr-4 py-2 text-sm focus:border-primary outline-none"
+          placeholder='Search transcripts...'
+          className='w-full bg-secondary/50 border border-secondary-light rounded-lg pl-10 pr-4 py-2 text-sm focus:border-primary outline-none'
         />
-        <MagnifyingGlassIcon className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+        <MagnifyingGlassIcon className='absolute left-3 top-2.5 w-5 h-5 text-gray-400' />
       </div>
 
-      <div className="space-y-4">
+      <div className='space-y-4'>
         {filteredTranscripts.map((transcript) => (
           <div
             key={transcript.id}
-            className="rounded-xl border border-secondary-light bg-secondary/10 hover:bg-secondary-light/10 transition-all overflow-hidden cursor-pointer"
+            className='rounded-xl border border-secondary-light bg-secondary/10 hover:bg-secondary-light/10 transition-all overflow-hidden cursor-pointer'
             onClick={() =>
               setSelectedTranscript(
                 selectedTranscript?.id === transcript.id ? null : transcript
               )
             }
           >
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+            <div className='p-6'>
+              <div className='flex items-center justify-between mb-4'>
+                <div className='flex items-center gap-4'>
+                  <div className='w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center'>
                     {transcript.agentAvatar ? (
                       <img
                         src={transcript.agentAvatar}
                         alt={transcript.agentName}
-                        className="w-12 h-12 rounded-full"
+                        className='w-12 h-12 rounded-full'
                       />
                     ) : (
-                      <UserCircleIcon className="w-6 h-6" />
+                      <UserCircleIcon className='w-6 h-6' />
                     )}
                   </div>
                   <div>
-                    <h3 className="font-medium text-lg">{transcript.topic}</h3>
+                    <h3 className='font-medium text-lg'>{transcript.topic}</h3>
                   </div>
                 </div>
                 <div
@@ -309,25 +387,25 @@ export function TranscriptsPage() {
                       : "bg-amber-500/10 text-amber-400"
                   }`}
                 >
-                  <ShieldCheckIcon className="w-4 h-4" />
+                  <ShieldCheckIcon className='w-4 h-4' />
                   {transcript.status}
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 text-sm text-gray-400">
-                <div className="flex items-center gap-1">
-                  <CalendarIcon className="w-4 h-4" />
+              <div className='flex items-center gap-4 text-sm text-gray-400'>
+                <div className='flex items-center gap-1'>
+                  <CalendarIcon className='w-4 h-4' />
                   {transcript.date}
                 </div>
                 <div>•</div>
-                <div className="flex items-center gap-1">
-                  <ClockIcon className="w-4 h-4" />
+                <div className='flex items-center gap-1'>
+                  <ClockIcon className='w-4 h-4' />
                   {transcript.duration}
                 </div>
               </div>
 
               {selectedTranscript?.id === transcript.id && (
-                <div className="mt-6 space-y-3 bg-secondary/20 rounded-lg p-4">
+                <div className='mt-6 space-y-3 bg-secondary/20 rounded-lg p-4'>
                   {transcript.transcript.map((message, index) => {
                     const [speaker, text] = message.split(": ");
                     const isAI = speaker === "AI";
@@ -343,10 +421,10 @@ export function TranscriptsPage() {
                             isAI ? "bg-secondary/30" : "bg-primary/20"
                           }`}
                         >
-                          <div className="text-xs font-medium mb-1 text-gray-400">
+                          <div className='text-xs font-medium mb-1 text-gray-400'>
                             {isAI ? transcript.agentName : "You"}
                           </div>
-                          <div className="text-sm">{text}</div>
+                          <div className='text-sm'>{text}</div>
                         </div>
                       </div>
                     );
@@ -360,21 +438,23 @@ export function TranscriptsPage() {
                     e.stopPropagation();
                     handleStartChat(transcript.id);
                   }}
-                  className="mt-4 w-full px-4 py-2 bg-secondary/30 hover:bg-secondary/50 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                  className='mt-4 w-full px-4 py-2 bg-secondary/30 hover:bg-secondary/50 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2'
                 >
-                  <ChatBubbleLeftRightIcon className="w-4 h-4" />
+                  <ChatBubbleLeftRightIcon className='w-4 h-4' />
                   Ask a follow-up question
                 </button>
               ) : (
                 <ChatInterface
                   transcriptId={transcript.id}
                   messages={activeChats[transcript.id]}
-                  onSendMessage={(message) => handleSendMessage(transcript.id, message)}
+                  onSendMessage={(message) =>
+                    handleSendMessage(transcript.id, message)
+                  }
                   newMessage={newMessage[transcript.id] || ""}
-                  onMessageChange={(message) => 
-                    setNewMessage(prev => ({
+                  onMessageChange={(message) =>
+                    setNewMessage((prev) => ({
                       ...prev,
-                      [transcript.id]: message
+                      [transcript.id]: message,
                     }))
                   }
                 />
