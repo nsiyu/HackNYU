@@ -124,7 +124,10 @@ export function Home() {
             },
             {
               type: "Crypto",
-              balance: account.crypto.toFixed(4),
+              balance: account.crypto.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }),
               currency: "USDC",
               value: (
                 account.crypto * CONVERSION_RATES.USDC_TO_USD
