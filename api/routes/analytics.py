@@ -64,7 +64,7 @@ async def get_spending_habits(request: Request):
     report_prompt = f"Analyze the following transactions and user info and summerize spending habits in 2 sentences:\n USER {user_info_str} \n TRANSACTIONS {transaction_str}"
 
     response = open_ai_client.chat.completions.create(
-        model="gpt-4", messages=[{"role": "user", "content": report_prompt}]
+        model="gpt-4o-mini", messages=[{"role": "user", "content": report_prompt}]
     )
     return JSONResponse(
         status_code=200,
@@ -104,7 +104,7 @@ async def get_spending_plan(request: Request):
     USER {user_info_str}"""
 
     response = open_ai_client.chat.completions.create(
-        model="gpt-4", messages=[{"role": "user", "content": plan_prompt}]
+        model="gpt-4o-mini", messages=[{"role": "user", "content": plan_prompt}]
     )
 
     try:
