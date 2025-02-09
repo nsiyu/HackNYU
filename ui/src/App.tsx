@@ -8,6 +8,7 @@ import { supabase } from "./lib/supabase";
 import LandingPage from "./components/LandingPage";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import { Registration as RegistrationComponent } from "./components/Registration";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -55,6 +56,10 @@ const router = createBrowserRouter([
         <Dashboard />
       </ProtectedRoute>
     ),
+  },
+  {
+    path: "/signup",
+    element: <RegistrationComponent />,
   },
 ]);
 
