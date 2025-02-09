@@ -28,7 +28,7 @@ interface Wallet {
 
 interface Account {
   user_id: string;
-  fiat: number;
+  balance: number;
   currency: string;
   mobile_money: number;
   crypto: number;
@@ -75,7 +75,6 @@ export function Home() {
           throw new Error("No authenticated user");
         }
 
-
         // Fetch user's accounts and transactions in parallel
         const [accountsResponse, transactionsResponse] = await Promise.all([
           supabase.from("accounts").select("*").eq("user_id", user.id),
@@ -91,18 +90,16 @@ export function Home() {
         const { data: transactions, error: transactionsError } =
           transactionsResponse;
 
-          if (accountsError) throw accountsError;
+        if (accountsError) throw accountsError;
         if (transactionsError) throw transactionsError;
-
-      
 
         // Set transactions
         setTransactions(transactions || []);
 
         // Calculate total balance in USD
         const totalUSD = accounts.reduce((total: number, account: Account) => {
-          const fiatUSD = account.fiat; // Assuming fiat is already in USD
-     
+          const fiatUSD = account.balance;
+
           const cryptoUSD = account.crypto * CONVERSION_RATES.USDC_TO_USD;
           return total + fiatUSD + cryptoUSD;
         }, 0);
@@ -114,13 +111,13 @@ export function Home() {
           .map((account: Account) => [
             {
               type: "Fiat",
-              balance: account.fiat.toLocaleString("en-US", {
+              balance: account.balance.toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               }),
               currency: account.currency || "USD",
               icon: <CashIcon className="w-6 h-6" />,
-              valueUSD: account.fiat, // Already in USD
+              valueUSD: account.balance,
             },
             {
               type: "Crypto",
@@ -143,7 +140,13 @@ export function Home() {
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <circle cx="12" cy="12" r="10" fill="currentColor" fillOpacity="0.2"/>
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    fill="currentColor"
+                    fillOpacity="0.2"
+                  />
                   <path
                     d="M12.9937 15.9861C12.9937 16.5361 12.5437 16.9861 11.9937 16.9861C11.4437 16.9861 10.9937 16.5361 10.9937 15.9861V14.4861H9.99371V15.9861C9.99371 17.0861 10.8937 17.9861 11.9937 17.9861C13.0937 17.9861 13.9937 17.0861 13.9937 15.9861V14.4861H12.9937V15.9861Z"
                     fill="currentColor"
@@ -305,7 +308,7 @@ export function Home() {
                 </div>
                 <div>
                   <div className="text-2xl font-bold mb-1">
-                    {wallet.currency} {wallet.balance}
+                    {wallet.currency} ${wallet.balance}
                   </div>
                   {wallet.value && (
                     <div className="text-sm text-gray-400">
